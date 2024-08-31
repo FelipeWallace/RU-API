@@ -142,7 +142,7 @@ app.get("/cardapio/:id/itens", (req, res) => {
     try {
       console.log("Rota: cardapio/" + req.params.id + "/itens");
       client.query(
-        "SELECT i.* FROM Item i INNER JOIN CardapioItem ci ON i.ID = ci.Item_ID WHERE ci.Cardapio_ID = $1",
+        "SELECT i.* FROM Item i INNER JOIN Cardapio_Item ci ON i.ID = ci.Item_ID WHERE ci.Cardapio_ID = $1",
         [req.params.id],
         (err, result) => {
           if (err) {
@@ -157,40 +157,40 @@ app.get("/cardapio/:id/itens", (req, res) => {
   });
 
 // CREATE (POST) ITEM
-app.post("/cardapio/:id/itens", (req, res) => {
-    try {
-      console.log("Alguém enviou um post com os dados de um item:", req.body);
-      const { nome, descricao, imagem_url } = req.body;
-      const cardapioId = req.params.id;
+// app.post("/cardapio/:id/itens", (req, res) => {
+//     try {
+//       console.log("Alguém enviou um post com os dados de um item:", req.body);
+//       const { nome, descricao, imagem_url } = req.body;
+//       const cardapioId = req.params.id;
   
-      client.query(
-        "INSERT INTO Item (nome, descricao, imagem_url) VALUES ($1, $2, $3) RETURNING *",
-        [nome, descricao, imagem_url],
-        (err, result) => {
-          if (err) {
-            return console.error("Erro ao executar a qry de INSERT item", err);
-          }
+//       client.query(
+//         "INSERT INTO Item (nome, descricao, imagem_url) VALUES ($1, $2, $3) RETURNING *",
+//         [nome, descricao, imagem_url],
+//         (err, result) => {
+//           if (err) {
+//             return console.error("Erro ao executar a qry de INSERT item", err);
+//           }
   
-          const itemId = result.rows[0].id;
+//           const itemId = result.rows[0].id;
   
-          client.query(
-            "INSERT INTO CardapioItem (Cardapio_ID, Item_ID) VALUES ($1, $2) RETURNING *",
-            [cardapioId, itemId],
-            (err, result) => {
-              if (err) {
-                return console.error("Erro ao executar a qry de associação do item ao cardápio", err);
-              }
-              res.status(201).json(result.rows[0]);
-            }
-          );
-        }
-      );
-    } catch (erro) {
-      console.error(erro);
-    }
-  });
+//           client.query(
+//             "INSERT INTO CardapioItem (Cardapio_ID, Item_ID) VALUES ($1, $2) RETURNING *",
+//             [cardapioId, itemId],
+//             (err, result) => {
+//               if (err) {
+//                 return console.error("Erro ao executar a qry de associação do item ao cardápio", err);
+//               }
+//               res.status(201).json(result.rows[0]);
+//             }
+//           );
+//         }
+//       );
+//     } catch (erro) {
+//       console.error(erro);
+//     }
+//   });
 
-  // UPDATE (PUT) ITEM
+// UPDATE (PUT) ITEM
 app.put("/itens/:id", (req, res) => {
     try {
       console.log("Alguém enviou um update com os dados do item:", req.body);
@@ -213,7 +213,7 @@ app.put("/itens/:id", (req, res) => {
     }
   });
 
-  // DELETE ITEM BY ID
+// DELETE ITEM BY ID
 app.delete("/itens/:id", (req, res) => {
     try {
       console.log("Rota: delete item/" + req.params.id);
@@ -238,7 +238,7 @@ app.delete("/itens/:id", (req, res) => {
     }
   });
   
-  // READ (GET) ITENS
+// READ (GET) ITENS
 app.get("/itens", (req, res) => {
     try {
       console.log("Rota: get itens");
