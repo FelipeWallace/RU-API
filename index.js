@@ -253,4 +253,51 @@ app.get("/itens", (req, res) => {
       res.status(500).json({ error: "Erro interno do servidor." });
     }
   });
-  
+
+  // ADD ITEM TO CARDAPIO
+app.post("/cardapio/:id/adicionar-item", (req, res) => {
+  const { id } = req.params; // Cardapio ID
+  const { itemId } = req.body; // Item ID
+
+  try {
+      client.query(
+          "INSERT INTO Cardapio_Item (Cardapio_ID, Item_ID) VALUES ($1, $2)",
+          [id, itemId],
+          (err, result) => {
+              if (err) {
+                  return console.error("Erro ao executar a qry de INSERT na tabela Cardapio_Item", err);
+              }
+              res.status(201).json({ message: "Item adicionado ao cardápio com sucesso!" });
+          }
+      );
+  } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Erro interno do servidor." });
+  }
+});
+
+// DELETE ITEM FROM CARDAPIO
+app.delete("/cardapio/:id/remover-item/:itemId", (req, res) => {
+  const { id, itemId } = req.params; // Cardapio ID and Item ID
+
+  try {
+      client.query(
+          "DELETE FROM Cardapio_Item WHERE Cardapio_ID = $1 AND Item_ID = $2",
+          [id, itemId],
+          (err, result) => {
+              if (err) {
+                  return console.error("Erro ao executar a qry de DELETE na tabela Cardapio_Item", err);
+              }
+              if (result.rowCount > 0) {
+                  res.status(200).json({ message: "Item removido do cardápio com sucesso!" });
+              } else {
+                  res.status(404).json({ message: "Item ou cardápio não encontrado." });
+              }
+          }
+      );
+  } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Erro interno do servidor." });
+  }
+});
+
