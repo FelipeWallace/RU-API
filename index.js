@@ -156,39 +156,39 @@ app.get("/cardapio/:id/itens", (req, res) => {
     }
   });
 
-// CREATE (POST) ITEM
-app.post("/cardapio/:id/itens", (req, res) => {
-    try {
-      console.log("Alguém enviou um post com os dados de um item:", req.body);
-      const { nome, descricao, imagem_url } = req.body;
-      const cardapioId = req.params.id;
+// // CREATE (POST) ITEM
+// app.post("/cardapio/:id/itens", (req, res) => {
+//     try {
+//       console.log("Alguém enviou um post com os dados de um item:", req.body);
+//       const { nome, descricao, imagem_url } = req.body;
+//       const cardapioId = req.params.id;
   
-      client.query(
-        "INSERT INTO Item (nome, descricao, imagem_url) VALUES ($1, $2, $3) RETURNING *",
-        [nome, descricao, imagem_url],
-        (err, result) => {
-          if (err) {
-            return console.error("Erro ao executar a qry de INSERT item", err);
-          }
+//       client.query(
+//         "INSERT INTO Item (nome, descricao, imagem_url) VALUES ($1, $2, $3) RETURNING *",
+//         [nome, descricao, imagem_url],
+//         (err, result) => {
+//           if (err) {
+//             return console.error("Erro ao executar a qry de INSERT item", err);
+//           }
   
-          const itemId = result.rows[0].id;
+//           const itemId = result.rows[0].id;
   
-          client.query(
-            "INSERT INTO CardapioItem (Cardapio_ID, Item_ID) VALUES ($1, $2) RETURNING *",
-            [cardapioId, itemId],
-            (err, result) => {
-              if (err) {
-                return console.error("Erro ao executar a qry de associação do item ao cardápio", err);
-              }
-              res.status(201).json(result.rows[0]);
-            }
-          );
-        }
-      );
-    } catch (erro) {
-      console.error(erro);
-    }
-  });
+//           client.query(
+//             "INSERT INTO CardapioItem (Cardapio_ID, Item_ID) VALUES ($1, $2) RETURNING *",
+//             [cardapioId, itemId],
+//             (err, result) => {
+//               if (err) {
+//                 return console.error("Erro ao executar a qry de associação do item ao cardápio", err);
+//               }
+//               res.status(201).json(result.rows[0]);
+//             }
+//           );
+//         }
+//       );
+//     } catch (erro) {
+//       console.error(erro);
+//     }
+//   });
 
 // UPDATE (PUT) ITEM
 app.put("/itens/:id", (req, res) => {
@@ -254,7 +254,7 @@ app.get("/itens", (req, res) => {
     }
   });
 
-  // ADD ITEM TO CARDAPIO
+// ADD ITEM TO CARDAPIO
 app.post("/cardapio/:id/adicionar-item", (req, res) => {
   const { id } = req.params; // Cardapio ID
   const { itemId } = req.body; // Item ID
@@ -298,6 +298,38 @@ app.delete("/cardapio/:id/remover-item/:itemId", (req, res) => {
   } catch (error) {
       console.log(error);
       res.status(500).json({ message: "Erro interno do servidor." });
+  }
+});
+
+// CREATE (POST) ITEM
+app.post("/itens", (req, res) => {
+  try {
+      console.log("Alguém enviou um post com os dados:", req.body);
+      const { nome, descricao, imagem_url} = req.body;
+
+      // Validação dos dados
+      if (!nome || !descricao) {
+          return res.status(400).json({ error: "Nome e descrição são obrigatórios." });
+      }
+
+      client.query(
+          "INSERT INTO Item (nome, descricao, imagem_url) VALUES ($1, $2, $3) RETURNING *",
+          [nome, descricao, imagem_url],
+          (err, result) => {
+              if (err) {
+                  console.error("Erro ao executar a qry de INSERT", err);
+                  return res.status(500).json({ error: "Erro ao criar item." });
+              }
+
+              const { id } = result.rows[0];
+              res.setHeader("id", id); // Configurando o header com o ID do novo item
+              res.status(201).json(result.rows[0]); // Retornando o item criado
+              console.log(result);
+          }
+      );
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Erro ao processar a requisição." });
   }
 });
 
