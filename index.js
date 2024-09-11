@@ -214,46 +214,90 @@ app.put("/itens/:id", (req, res) => {
 });
 
 // DELETE ITEM BY ID
+// app.delete("/itens/:id", (req, res) => {
+//   let podeExcluir = false;
+//   try {
+//     console.log("Rota: delete item/" + req.params.id);
+//     //validacao de presenca em cardapios
+//     client.query(
+//       "SELECT * FROM Cardapio_Item WHERE Item_ID = $1", [req.params.id], (err, result) => {
+//         if (err) {
+//           // retornar mensagem de erro com status code
+//           return console.error("Erro ao executar a qry de SELECT item", err);
+//         }
+//         if (result.rowCount > 0) {
+//           res.status(400).json({ info: "Item em cardápio. Não pode ser excluído." });
+//         } else {
+//           podeExcluir = true;
+//         }
+//       }
+//     )
+//     if (podeExcluir) {
+//       client.query(
+//         "DELETE FROM Item WHERE id = $1",
+//         [req.params.id],
+//         (err, result) => {
+//           if (err) {
+//             return console.error("Erro ao executar a qry de DELETE item", err);
+//           } else {
+//             if (result.rowCount == 0) {
+//               res.status(404).json({ info: "Item não encontrado." });
+//             } else {
+//               res.status(200).json({ info: `Item excluído.` });
+//             }
+//           }
+//           console.log(result);
+//         }
+//       );
+//     }
+//   } catch (error) {
+//     console.log(error);
+//   }
+// });
+
+// DELETE ITEM BY ID
 app.delete("/itens/:id", (req, res) => {
-  let podeExcluir = false;
   try {
     console.log("Rota: delete item/" + req.params.id);
-    //validacao de presenca em cardapios
+
+    // Validação de presença em cardápios
     client.query(
       "SELECT * FROM Cardapio_Item WHERE Item_ID = $1", [req.params.id], (err, result) => {
         if (err) {
-          // retornar mensagem de erro com status code
-          return console.error("Erro ao executar a qry de SELECT item", err);
+          // Retornar mensagem de erro com status code
+          console.error("Erro ao executar a qry de SELECT item", err);
+          return res.status(500).json({ error: "Erro no servidor ao verificar item em cardápio" });
         }
+
+        // Se o item está em algum cardápio, impedir exclusão
         if (result.rowCount > 0) {
-          res.status(400).json({ info: "Item em cardápio. Não pode ser excluído." });
-        } else {
-          podeExcluir = true;
+          return res.status(400).json({ info: "Item em cardápio. Não pode ser excluído." });
         }
-      }
-    )
-    if (podeExcluir) {
-      client.query(
-        "DELETE FROM Item WHERE id = $1",
-        [req.params.id],
-        (err, result) => {
-          if (err) {
-            return console.error("Erro ao executar a qry de DELETE item", err);
-          } else {
-            if (result.rowCount == 0) {
-              res.status(404).json({ info: "Item não encontrado." });
-            } else {
-              res.status(200).json({ info: `Item excluído.` });
+
+        // Se não está em nenhum cardápio, pode excluir
+        client.query(
+          "DELETE FROM Item WHERE id = $1", [req.params.id],
+          (err, result) => {
+            if (err) {
+              console.error("Erro ao executar a qry de DELETE item", err);
+              return res.status(500).json({ error: "Erro no servidor ao excluir item" });
             }
+
+            if (result.rowCount == 0) {
+              return res.status(404).json({ info: "Item não encontrado." });
+            }
+
+            res.status(200).json({ info: "Item excluído com sucesso." });
           }
-          console.log(result);
-        }
-      );
-    }
+        );
+      }
+    );
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    res.status(500).json({ error: "Erro no servidor." });
   }
 });
+
 
 // READ (GET) ITENS
 app.get("/itens", (req, res) => {
