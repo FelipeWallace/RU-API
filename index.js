@@ -394,3 +394,179 @@ app.post("/itens", (req, res) => {
   }
 });
 
+// Rotas para a tabela Usuarios
+app.get('/usuarios', (req, res) => {
+    client.query('SELECT * FROM Usuarios', (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erro ao buscar usuários.' });
+        }
+        res.json(result.rows);
+    });
+});
+
+app.get('/usuarios/:id', (req, res) => {
+    client.query('SELECT * FROM Usuarios WHERE id = $1', [req.params.id], (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erro ao buscar usuário.' });
+        }
+        res.json(result.rows[0]);
+    });
+});
+
+app.post('/usuarios', (req, res) => {
+    const { nome, email, senha, perfil } = req.body;
+    client.query(
+        'INSERT INTO Usuarios (nome, email, senha, perfil) VALUES ($1, $2, $3, $4) RETURNING *',
+        [nome, email, senha, perfil],
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao criar usuário.' });
+            }
+            res.status(201).json(result.rows[0]);
+        }
+    );
+});
+
+app.put('/usuarios/:id', (req, res) => {
+    const { nome, email, senha, perfil } = req.body;
+    client.query(
+        'UPDATE Usuarios SET nome = $1, email = $2, senha = $3, perfil = $4 WHERE id = $5 RETURNING *',
+        [nome, email, senha, perfil, req.params.id],
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao atualizar usuário.' });
+            }
+            res.json(result.rows[0]);
+        }
+    );
+});
+
+app.delete('/usuarios/:id', (req, res) => {
+    client.query('DELETE FROM Usuarios WHERE id = $1 RETURNING *', [req.params.id], (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erro ao deletar usuário.' });
+        }
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Usuário não encontrado.' });
+        }
+        res.json({ message: 'Usuário excluído.' });
+    });
+});
+
+// Rotas para a tabela Avaliacao
+app.get('/avaliacoes', (req, res) => {
+    client.query('SELECT * FROM Avaliacao', (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erro ao buscar avaliações.' });
+        }
+        res.json(result.rows);
+    });
+});
+
+app.get('/avaliacoes/:id', (req, res) => {
+    client.query('SELECT * FROM Avaliacao WHERE id = $1', [req.params.id], (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erro ao buscar avaliação.' });
+        }
+        res.json(result.rows[0]);
+    });
+});
+
+app.post('/avaliacoes', (req, res) => {
+    const { pontuacao, comentario, data, Usuarios_ID, Cardapio_ID } = req.body;
+    client.query(
+        'INSERT INTO Avaliacao (pontuacao, comentario, data, Usuarios_ID, Cardapio_ID) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [pontuacao, comentario, data, Usuarios_ID, Cardapio_ID],
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao criar avaliação.' });
+            }
+            res.status(201).json(result.rows[0]);
+        }
+    );
+});
+
+app.put('/avaliacoes/:id', (req, res) => {
+    const { pontuacao, comentario, data, Usuarios_ID, Cardapio_ID } = req.body;
+    client.query(
+        'UPDATE Avaliacao SET pontuacao = $1, comentario = $2, data = $3, Usuarios_ID = $4, Cardapio_ID = $5 WHERE id = $6 RETURNING *',
+        [pontuacao, comentario, data, Usuarios_ID, Cardapio_ID, req.params.id],
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao atualizar avaliação.' });
+            }
+            res.json(result.rows[0]);
+        }
+    );
+});
+
+app.delete('/avaliacoes/:id', (req, res) => {
+    client.query('DELETE FROM Avaliacao WHERE id = $1 RETURNING *', [req.params.id], (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erro ao deletar avaliação.' });
+        }
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Avaliação não encontrada.' });
+        }
+        res.json({ message: 'Avaliação excluída.' });
+    });
+});
+
+// Rotas para a tabela Avisos
+app.get('/avisos', (req, res) => {
+    client.query('SELECT * FROM Avisos', (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erro ao buscar avisos.' });
+        }
+        res.json(result.rows);
+    });
+});
+
+app.get('/avisos/:id', (req, res) => {
+    client.query('SELECT * FROM Avisos WHERE id = $1', [req.params.id], (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erro ao buscar aviso.' });
+        }
+        res.json(result.rows[0]);
+    });
+});
+
+app.post('/avisos', (req, res) => {
+    const { data, aviso, tipo, Usuarios_ID } = req.body;
+    client.query(
+        'INSERT INTO Avisos (data, aviso, tipo, Usuarios_ID) VALUES ($1, $2, $3, $4) RETURNING *',
+        [data, aviso, tipo, Usuarios_ID],
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao criar aviso.' });
+            }
+            res.status(201).json(result.rows[0]);
+        }
+    );
+});
+
+app.put('/avisos/:id', (req, res) => {
+    const { data, aviso, tipo, Usuarios_ID } = req.body;
+    client.query(
+        'UPDATE Avisos SET data = $1, aviso = $2, tipo = $3, Usuarios_ID = $4 WHERE id = $5 RETURNING *',
+        [data, aviso, tipo, Usuarios_ID, req.params.id],
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao atualizar aviso.' });
+            }
+            res.json(result.rows[0]);
+        }
+    );
+});
+
+app.delete('/avisos/:id', (req, res) => {
+    client.query('DELETE FROM Avisos WHERE id = $1 RETURNING *', [req.params.id], (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erro ao deletar aviso.' });
+        }
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Aviso não encontrado.' });
+        }
+        res.json({ message: 'Aviso excluído.' });
+    });
+});
