@@ -473,32 +473,67 @@ app.get('/avaliacoes/:id', (req, res) => {
 });
 
 app.post('/avaliacoes', (req, res) => {
-    const { pontuacao, comentario, data, Usuarios_ID, Cardapio_ID } = req.body;
-    client.query(
-        'INSERT INTO Avaliacao (pontuacao, comentario, data, Usuarios_ID, Cardapio_ID) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [pontuacao, comentario, data, Usuarios_ID, Cardapio_ID],
-        (err, result) => {
-            if (err) {
-                return res.status(500).json({ error: 'Erro ao criar avaliação.' });
-            }
-            res.status(201).json(result.rows[0]);
-        }
-    );
+  const { pontuacao, comentario, Usuarios_ID, Cardapio_ID } = req.body;
+
+  // Verifique se os campos obrigatórios estão presentes
+  if (!pontuacao || !Usuarios_ID || !Cardapio_ID) {
+      return res.status(400).json({ error: 'Pontuação, Usuários_ID e Cardapio_ID são obrigatórios.' });
+  }
+
+  // Verifique se já existe uma avaliação para o mesmo usuário e cardápio
+  client.query(
+      'SELECT * FROM Avaliacao WHERE Usuarios_ID = $1 AND Cardapio_ID = $2',
+      [Usuarios_ID, Cardapio_ID],
+      (err, result) => {
+          if (err) {
+              return res.status(500).json({ error: 'Erro ao verificar avaliação existente.' });
+          }
+
+          // Se já existe uma avaliação, retorne um erro
+          if (result.rowCount > 0) {
+              return res.status(400).json({ error: 'Usuário já avaliou este cardápio.' });
+          }
+
+          // Se não existe avaliação, prossiga com a inserção
+          client.query(
+              'INSERT INTO Avaliacao (pontuacao, comentario, data, Usuarios_ID, Cardapio_ID) VALUES ($1, $2, CURRENT_DATE, $3, $4) RETURNING *',
+              [pontuacao, comentario, Usuarios_ID, Cardapio_ID],
+              (err, result) => {
+                  if (err) {
+                      return res.status(500).json({ error: 'Erro ao criar avaliação.' });
+                  }
+                  res.status(201).json(result.rows[0]);
+              }
+          );
+      }
+  );
 });
 
+
+
 app.put('/avaliacoes/:id', (req, res) => {
-    const { pontuacao, comentario, data, Usuarios_ID, Cardapio_ID } = req.body;
-    client.query(
-        'UPDATE Avaliacao SET pontuacao = $1, comentario = $2, data = $3, Usuarios_ID = $4, Cardapio_ID = $5 WHERE id = $6 RETURNING *',
-        [pontuacao, comentario, data, Usuarios_ID, Cardapio_ID, req.params.id],
-        (err, result) => {
-            if (err) {
-                return res.status(500).json({ error: 'Erro ao atualizar avaliação.' });
-            }
-            res.json(result.rows[0]);
-        }
-    );
+  const { pontuacao, comentario, Usuarios_ID, Cardapio_ID } = req.body;
+
+  // Verifique se o ID da avaliação foi fornecido
+  if (!req.params.id) {
+      return res.status(400).json({ error: 'ID da avaliação é obrigatório.' });
+  }
+
+  client.query(
+      'UPDATE Avaliacao SET pontuacao = $1, comentario = $2, data = CURRENT_DATE, Usuarios_ID = $3, Cardapio_ID = $4 WHERE id = $5 RETURNING *',
+      [pontuacao, comentario, Usuarios_ID, Cardapio_ID, req.params.id],
+      (err, result) => {
+          if (err) {
+              return res.status(500).json({ error: 'Erro ao atualizar avaliação.' });
+          }
+          if (result.rowCount === 0) {
+              return res.status(404).json({ error: 'Avaliação não encontrada.' });
+          }
+          res.json(result.rows[0]);
+      }
+  );
 });
+
 
 app.delete('/avaliacoes/:id', (req, res) => {
     client.query('DELETE FROM Avaliacao WHERE id = $1 RETURNING *', [req.params.id], (err, result) => {
