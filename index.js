@@ -473,20 +473,20 @@ app.get('/avaliacoes/:id', (req, res) => {
 });
 
 app.post('/avaliacoes', (req, res) => {
-  const { pontuacao, comentario, Usuarios_ID, Cardapio_ID } = req.body;
+  const { pontuacao, comentario, usuarios_id, cardapio_id } = req.body;
 
   // Verifique se os campos obrigatórios estão presentes
-  if (!pontuacao || !Usuarios_ID || !Cardapio_ID) {
+  if (!pontuacao || !usuarios_id || !cardapio_id) {
       return res.status(400).json({ error: 'Pontuação, Usuários_ID e Cardapio_ID são obrigatórios.' });
   }
 
   // Verifique se já existe uma avaliação para o mesmo usuário e cardápio
   client.query(
       'SELECT * FROM Avaliacao WHERE Usuarios_ID = $1 AND Cardapio_ID = $2',
-      [Usuarios_ID, Cardapio_ID],
+      [usuarios_id, cardapio_id],
       (err, result) => {
           if (err) {
-              return res.status(500).json({ error: 'Erro ao verificar avaliação existente.' });
+              return res.status(400).json({ error: 'Erro ao verificar avaliação existente.' });
           }
 
           // Se já existe uma avaliação, retorne um erro
@@ -497,7 +497,7 @@ app.post('/avaliacoes', (req, res) => {
           // Se não existe avaliação, prossiga com a inserção
           client.query(
               'INSERT INTO Avaliacao (pontuacao, comentario, data, Usuarios_ID, Cardapio_ID) VALUES ($1, $2, CURRENT_DATE, $3, $4) RETURNING *',
-              [pontuacao, comentario, Usuarios_ID, Cardapio_ID],
+              [pontuacao, comentario, usuarios_id, cardapio_id],
               (err, result) => {
                   if (err) {
                       return res.status(500).json({ error: 'Erro ao criar avaliação.' });
@@ -512,7 +512,7 @@ app.post('/avaliacoes', (req, res) => {
 
 
 app.put('/avaliacoes/:id', (req, res) => {
-  const { pontuacao, comentario, Usuarios_ID, Cardapio_ID } = req.body;
+  const { pontuacao, comentario, usuarios_id, cardapio_id } = req.body;
 
   // Verifique se o ID da avaliação foi fornecido
   if (!req.params.id) {
@@ -521,7 +521,7 @@ app.put('/avaliacoes/:id', (req, res) => {
 
   client.query(
       'UPDATE Avaliacao SET pontuacao = $1, comentario = $2, data = CURRENT_DATE, Usuarios_ID = $3, Cardapio_ID = $4 WHERE id = $5 RETURNING *',
-      [pontuacao, comentario, Usuarios_ID, Cardapio_ID, req.params.id],
+      [pontuacao, comentario, usuarios_id, cardapio_id, req.params.id],
       (err, result) => {
           if (err) {
               return res.status(500).json({ error: 'Erro ao atualizar avaliação.' });
