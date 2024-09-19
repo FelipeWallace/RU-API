@@ -91,27 +91,34 @@ app.delete("/cardapio/:id", (req, res) => {
   }
 });
 
+
 // CREATE (POST) CARDAPIO
 app.post("/cardapio", (req, res) => {
   try {
     console.log("Alguém enviou um post com os dados:", req.body);
     const { data, refeicao, titulo } = req.body;
+
     client.query(
-      "INSERT INTO cardapio (data, refeicao, titulo) VALUES ($1, $2, $3) RETURNING * ", [data, refeicao, titulo],
+      "INSERT INTO cardapio (data, refeicao, titulo) VALUES ($1, $2, $3) RETURNING *", 
+      [data, refeicao, titulo],
       (err, result) => {
         if (err) {
-          return console.error("Erro ao executar a qry de INSERT", err);
+          console.error("Erro ao executar a qry de INSERT", err);
+          return res.status(500).json({ error: "Erro ao inserir dados no banco" });
         }
+
         const { id } = result.rows[0];
-        res.setHeader("id", $`{id}`);
+        res.setHeader("id", `${id}`);
         res.status(201).json(result.rows[0]);
         console.log(result);
       }
     );
   } catch (erro) {
     console.error(erro);
+    res.status(500).json({ error: "Erro no servidor" });
   }
 });
+
 
 // UPDATE (PUT) CARDAPIO
 app.put("/cardapio/:id", (req, res) => {
@@ -605,3 +612,93 @@ app.delete('/avisos/:id', (req, res) => {
         res.json({ message: 'Aviso excluído.' });
     });
 });
+
+// Rotas para a tabela Cardapio_Item
+// CREATE - Adicionar novo Cardapio_Item
+app.post('/cardapio_item', (req, res) => {
+  const { Cardapio_ID, Item_ID } = req.body;
+  client.query(
+      'INSERT INTO Cardapio_Item (Cardapio_ID, Item_ID) VALUES ($1, $2) RETURNING *',
+      [Cardapio_ID, Item_ID],
+      (err, result) => {
+          if (err) {
+              return res.status(500).json({ error: 'Erro ao adicionar item ao cardápio.' });
+          }
+          res.status(201).json(result.rows[0]);
+      }
+  );
+});
+
+// READ - Listar todos os itens de cardápio
+app.get('/cardapio_item', (req, res) => {
+  client.query('SELECT * FROM Cardapio_Item', (err, result) => {
+      if (err) {
+          return res.status(500).json({ error: 'Erro ao listar itens do cardápio.' });
+      }
+      res.json(result.rows);
+  });
+});
+
+// READ - Obter item de cardápio por ID
+app.get('/cardapio_item/:id', (req, res) => {
+  const { id } = req.params;
+  client.query('SELECT * FROM Cardapio_Item WHERE ID = $1', [id], (err, result) => {
+      if (err) {
+          return res.status(500).json({ error: 'Erro ao obter item do cardápio.' });
+      }
+      if (result.rowCount === 0) {
+          return res.status(404).json({ error: 'Item do cardápio não encontrado.' });
+      }
+      res.json(result.rows[0]);
+  });
+});
+
+// UPDATE - Atualizar item de cardápio
+app.put('/cardapio_item/:id', (req, res) => {
+  const { id } = req.params;
+  const { Cardapio_ID, Item_ID } = req.body;
+  client.query(
+      'UPDATE Cardapio_Item SET Cardapio_ID = $1, Item_ID = $2 WHERE ID = $3 RETURNING *',
+      [Cardapio_ID, Item_ID, id],
+      (err, result) => {
+          if (err) {
+              return res.status(500).json({ error: 'Erro ao atualizar item do cardápio.' });
+          }
+          if (result.rowCount === 0) {
+              return res.status(404).json({ error: 'Item do cardápio não encontrado.' });
+          }
+          res.json(result.rows[0]);
+      }
+  );
+});
+
+// DELETE - Excluir item de cardápio
+app.delete('/cardapio_item/:id', (req, res) => {
+  const { id } = req.params;
+  client.query('DELETE FROM Cardapio_Item WHERE ID = $1 RETURNING *', [id], (err, result) => {
+      if (err) {
+          return res.status(500).json({ error: 'Erro ao excluir item do cardápio.' });
+      }
+      if (result.rowCount === 0) {
+          return res.status(404).json({ error: 'Item do cardápio não encontrado.' });
+      }
+      res.json({ message: 'Item do cardápio excluído com sucesso.' });
+  });
+});
+
+// Rota para excluir todos os itens de um cardápio 
+app.delete("/cardapio/:id/itens", (req, res) => {
+  const cardapioId = req.params.id;
+
+  client.query(
+      "DELETE FROM Cardapio_Item WHERE Cardapio_ID = $1",
+      [cardapioId],
+      (err, result) => {
+          if (err) {
+              return res.status(500).json({ error: "Erro ao excluir itens" });
+          }
+          res.status(200).json({ message: "Itens removidos com sucesso" });
+      }
+  );
+});
+
