@@ -71,25 +71,49 @@ app.get("/cardapio/:id", (req, res) => {
 // DELETE CARDAPIO BY ID
 app.delete("/cardapio/:id", (req, res) => {
   try {
-    console.log("Rota: delete/" + req.params.id);
+    const cardapioId = req.params.id;
+    console.log("Rota: delete/" + cardapioId);
+
+    // Verificar se existem avaliações associadas ao cardápio
     client.query(
-      "DELETE FROM cardapio WHERE id = $1", [req.params.id], (err, result) => {
+      "SELECT COUNT(*) FROM avaliacao WHERE cardapio_id = $1", 
+      [cardapioId], 
+      (err, result) => {
         if (err) {
-          return console.error("Erro ao executar a qry de DELETE", err);
-        } else {
-          if (result.rowCount == 0) {
-            res.status(404).json({ info: "Registro não encontrado." });
-          } else {
-            res.status(200).json({ info: "Registro excluído." });
-          }
+          return console.error("Erro ao verificar avaliações", err);
         }
-        console.log(result);
+
+        const avaliacaoCount = parseInt(result.rows[0].count, 10);
+
+        if (avaliacaoCount > 0) {
+          // Impedir exclusão caso existam avaliações
+          return res.status(400).json({ error: "Não é possível excluir um cardápio que já foi avaliado." });
+        }
+
+        // Se não houver avaliações, proceder com a exclusão do cardápio
+        client.query(
+          "DELETE FROM cardapio WHERE id = $1", 
+          [cardapioId], 
+          (err, result) => {
+            if (err) {
+              return console.error("Erro ao executar a query de DELETE", err);
+            }
+
+            if (result.rowCount === 0) {
+              res.status(404).json({ info: "Registro não encontrado." });
+            } else {
+              res.status(200).json({ info: "Registro excluído." });
+            }
+          }
+        );
       }
     );
   } catch (error) {
     console.log(error);
+    res.status(500).json({ error: "Ocorreu um erro no servidor." });
   }
 });
+
 
 
 // CREATE (POST) CARDAPIO
@@ -449,16 +473,34 @@ app.put('/usuarios/:id', (req, res) => {
 });
 
 app.delete('/usuarios/:id', (req, res) => {
-    client.query('DELETE FROM Usuarios WHERE id = $1 RETURNING *', [req.params.id], (err, result) => {
+    const usuarioId = req.params.id;
+
+    // Verificar se o usuário já fez uma avaliação
+    client.query('SELECT COUNT(*) FROM avaliacao WHERE usuarios_id = $1', [usuarioId], (err, result) => {
         if (err) {
-            return res.status(500).json({ error: 'Erro ao deletar usuário.' });
+            return res.status(500).json({ error: 'Erro ao verificar avaliações do usuário.' });
         }
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: 'Usuário não encontrado.' });
+
+        const avaliacaoCount = parseInt(result.rows[0].count, 10);
+
+        if (avaliacaoCount > 0) {
+            // Impedir exclusão caso o usuário tenha avaliações
+            return res.status(400).json({ error: 'Não é possível excluir um usuário que já fez avaliações.' });
         }
-        res.json({ message: 'Usuário excluído.' });
+
+        // Se o usuário não fez nenhuma avaliação, proceder com a exclusão
+        client.query('DELETE FROM Usuarios WHERE id = $1 RETURNING *', [usuarioId], (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erro ao deletar usuário.' });
+            }
+            if (result.rowCount === 0) {
+                return res.status(404).json({ message: 'Usuário não encontrado.' });
+            }
+            res.json({ message: 'Usuário excluído.' });
+        });
     });
 });
+
 
 // Rotas para a tabela Avaliacao
 app.get('/avaliacoes', (req, res) => {
