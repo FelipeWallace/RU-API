@@ -187,40 +187,6 @@ app.get("/cardapio/:id/itens", (req, res) => {
   }
 });
 
-// // CREATE (POST) ITEM
-// app.post("/cardapio/:id/itens", (req, res) => {
-//     try {
-//       console.log("Alguém enviou um post com os dados de um item:", req.body);
-//       const { nome, descricao, imagem_url } = req.body;
-//       const cardapioId = req.params.id;
-
-//       client.query(
-//         "INSERT INTO Item (nome, descricao, imagem_url) VALUES ($1, $2, $3) RETURNING *",
-//         [nome, descricao, imagem_url],
-//         (err, result) => {
-//           if (err) {
-//             return console.error("Erro ao executar a qry de INSERT item", err);
-//           }
-
-//           const itemId = result.rows[0].id;
-
-//           client.query(
-//             "INSERT INTO CardapioItem (Cardapio_ID, Item_ID) VALUES ($1, $2) RETURNING *",
-//             [cardapioId, itemId],
-//             (err, result) => {
-//               if (err) {
-//                 return console.error("Erro ao executar a qry de associação do item ao cardápio", err);
-//               }
-//               res.status(201).json(result.rows[0]);
-//             }
-//           );
-//         }
-//       );
-//     } catch (erro) {
-//       console.error(erro);
-//     }
-//   });
-
 // UPDATE (PUT) ITEM
 app.put("/itens/:id", (req, res) => {
   try {
@@ -243,48 +209,6 @@ app.put("/itens/:id", (req, res) => {
     console.error(erro);
   }
 });
-
-// DELETE ITEM BY ID
-// app.delete("/itens/:id", (req, res) => {
-//   let podeExcluir = false;
-//   try {
-//     console.log("Rota: delete item/" + req.params.id);
-//     //validacao de presenca em cardapios
-//     client.query(
-//       "SELECT * FROM Cardapio_Item WHERE Item_ID = $1", [req.params.id], (err, result) => {
-//         if (err) {
-//           // retornar mensagem de erro com status code
-//           return console.error("Erro ao executar a qry de SELECT item", err);
-//         }
-//         if (result.rowCount > 0) {
-//           res.status(400).json({ info: "Item em cardápio. Não pode ser excluído." });
-//         } else {
-//           podeExcluir = true;
-//         }
-//       }
-//     )
-//     if (podeExcluir) {
-//       client.query(
-//         "DELETE FROM Item WHERE id = $1",
-//         [req.params.id],
-//         (err, result) => {
-//           if (err) {
-//             return console.error("Erro ao executar a qry de DELETE item", err);
-//           } else {
-//             if (result.rowCount == 0) {
-//               res.status(404).json({ info: "Item não encontrado." });
-//             } else {
-//               res.status(200).json({ info: `Item excluído.` });
-//             }
-//           }
-//           console.log(result);
-//         }
-//       );
-//     }
-//   } catch (error) {
-//     console.log(error);
-//   }
-// });
 
 // DELETE ITEM BY ID
 app.delete("/itens/:id", (req, res) => {
@@ -445,10 +369,10 @@ app.get('/usuarios/:id', (req, res) => {
 });
 
 app.post('/usuarios', (req, res) => {
-    const { nome, email, senha, perfil } = req.body;
+    const { nome, email, foto, perfil } = req.body;
     client.query(
-        'INSERT INTO Usuarios (nome, email, senha, perfil) VALUES ($1, $2, $3, $4) RETURNING *',
-        [nome, email, senha, perfil],
+        'INSERT INTO Usuarios (nome, email, foto, perfil) VALUES ($1, $2, $3, $4) RETURNING *',
+        [nome, email, foto, perfil],
         (err, result) => {
             if (err) {
                 return res.status(500).json({ error: 'Erro ao criar usuário.' });
@@ -459,10 +383,10 @@ app.post('/usuarios', (req, res) => {
 });
 
 app.put('/usuarios/:id', (req, res) => {
-    const { nome, email, senha, perfil } = req.body;
+    const { nome, email, foto, perfil } = req.body;
     client.query(
-        'UPDATE Usuarios SET nome = $1, email = $2, senha = $3, perfil = $4 WHERE id = $5 RETURNING *',
-        [nome, email, senha, perfil, req.params.id],
+        'UPDATE Usuarios SET nome = $1, email = $2, foto = $3, perfil = $4 WHERE id = $5 RETURNING *',
+        [nome, email, foto, perfil, req.params.id],
         (err, result) => {
             if (err) {
                 return res.status(500).json({ error: 'Erro ao atualizar usuário.' });
@@ -557,7 +481,6 @@ app.post('/avaliacoes', (req, res) => {
       }
   );
 });
-
 
 
 app.put('/avaliacoes/:id', (req, res) => {
