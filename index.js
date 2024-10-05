@@ -33,7 +33,8 @@ app.listen(config.port, () =>
   console.log("Servidor funcionando na porta " + config.port)
 );
 
-// READ (GET) CARDAPIO
+/***************************************************** Rotas para a tabela Cardapio************************************************************/
+// READ (GET) - Listar todos os cardápios
 app.get("/cardapio", (req, res) => {
   try {
     client.query("SELECT * FROM cardapio", function
@@ -49,7 +50,7 @@ app.get("/cardapio", (req, res) => {
   }
 });
 
-// READ (GET) CARDAPIO BY ID
+// READ (GET) - Listar cardápio por ID
 app.get("/cardapio/:id", (req, res) => {
   try {
     console.log("Rota: cardapio/" + req.params.id);
@@ -68,7 +69,7 @@ app.get("/cardapio/:id", (req, res) => {
   }
 });
 
-// DELETE CARDAPIO BY ID
+// DELETE (DELETE) - Excluir cardápio
 app.delete("/cardapio/:id", (req, res) => {
   try {
     const cardapioId = req.params.id;
@@ -114,9 +115,7 @@ app.delete("/cardapio/:id", (req, res) => {
   }
 });
 
-
-
-// CREATE (POST) CARDAPIO
+// CREATE (POST) - Cadastrar cardápio
 app.post("/cardapio", (req, res) => {
   try {
     console.log("Alguém enviou um post com os dados:", req.body);
@@ -143,8 +142,7 @@ app.post("/cardapio", (req, res) => {
   }
 });
 
-
-// UPDATE (PUT) CARDAPIO
+// UPDATE (PUT) - Atualizar cardápio
 app.put("/cardapio/:id", (req, res) => {
   try {
     console.log("Alguém enviou um update com os dados:", req.body);
@@ -168,7 +166,7 @@ app.put("/cardapio/:id", (req, res) => {
   }
 });
 
-// READ (GET) ITENS BY CARDAPIO ID
+// READ (GET) ITENS BY CARDAPIO ID - Retorna todos os itens de um cardápio
 app.get("/cardapio/:id/itens", (req, res) => {
   try {
     console.log("Rota: cardapio/" + req.params.id + "/itens");
@@ -187,7 +185,89 @@ app.get("/cardapio/:id/itens", (req, res) => {
   }
 });
 
-// UPDATE (PUT) ITEM
+// CREATE (POST) - Criar item em um cardápio
+app.post("/cardapio/:id/adicionar-item", (req, res) => {
+  const { id } = req.params; // Cardapio ID
+  const { itemId } = req.body; // Item ID
+
+  try {
+    client.query(
+      "INSERT INTO Cardapio_Item (Cardapio_ID, Item_ID) VALUES ($1, $2)",
+      [id, itemId],
+      (err, result) => {
+        if (err) {
+          return console.error("Erro ao executar a qry de INSERT na tabela Cardapio_Item", err);
+        }
+        res.status(201).json({ message: "Item adicionado ao cardápio com sucesso!" });
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+});
+
+// DELETE (DELETE) - Remover item de um cardápio
+app.delete("/cardapio/:id/remover-item/:itemId", (req, res) => {
+  const { id, itemId } = req.params; // Cardapio ID and Item ID
+
+  try {
+    client.query(
+      "DELETE FROM Cardapio_Item WHERE Cardapio_ID = $1 AND Item_ID = $2",
+      [id, itemId],
+      (err, result) => {
+        if (err) {
+          return console.error("Erro ao executar a qry de DELETE na tabela Cardapio_Item", err);
+        }
+        if (result.rowCount > 0) {
+          res.status(200).json({ message: "Item removido do cardápio com sucesso!" });
+        } else {
+          res.status(404).json({ message: "Item ou cardápio não encontrado." });
+        }
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+});
+
+// DELETE (DELETE) - Excluir todos os itens de um cardápio 
+app.delete("/cardapio/:id/itens", (req, res) => {
+  const cardapioId = req.params.id;
+
+  client.query(
+      "DELETE FROM Cardapio_Item WHERE Cardapio_ID = $1",
+      [cardapioId],
+      (err, result) => {
+          if (err) {
+              return res.status(500).json({ error: "Erro ao excluir itens" });
+          }
+          res.status(200).json({ message: "Itens removidos com sucesso" });
+      }
+  );
+});
+
+// Rota para verificar se um cardápio já foi avaliado
+app.get('/cardapio/:id/avaliado', (req, res) => {
+  const cardapioId = req.params.id;
+
+  const query = 'SELECT COUNT(*) AS total FROM Avaliacao WHERE cardapio_id = $1';
+  
+  client.query(query, [cardapioId], (err, result) => {
+      if (err) {
+          return res.status(500).json({ error: 'Erro ao verificar avaliações.' });
+      }
+
+      // Retorna true se o total for maior que 0, caso contrário, false
+      const foiAvaliado = result.rows[0].total > 0;
+      res.json({ foiAvaliado });
+  });
+});
+
+
+/************************************************* Rotas da Tabela Item *************************************************/
+// UPDATE (PUT) - Atualizar item
 app.put("/itens/:id", (req, res) => {
   try {
     console.log("Alguém enviou um update com os dados do item:", req.body);
@@ -210,7 +290,7 @@ app.put("/itens/:id", (req, res) => {
   }
 });
 
-// DELETE ITEM BY ID
+// DELETE (DELETE) - Excluir item
 app.delete("/itens/:id", (req, res) => {
   try {
     console.log("Rota: delete item/" + req.params.id);
@@ -253,8 +333,7 @@ app.delete("/itens/:id", (req, res) => {
   }
 });
 
-
-// READ (GET) ITENS
+// READ (GET) - Listar todos os itens
 app.get("/itens", (req, res) => {
   try {
     console.log("Rota: get itens");
@@ -270,54 +349,7 @@ app.get("/itens", (req, res) => {
   }
 });
 
-// ADD ITEM TO CARDAPIO
-app.post("/cardapio/:id/adicionar-item", (req, res) => {
-  const { id } = req.params; // Cardapio ID
-  const { itemId } = req.body; // Item ID
-
-  try {
-    client.query(
-      "INSERT INTO Cardapio_Item (Cardapio_ID, Item_ID) VALUES ($1, $2)",
-      [id, itemId],
-      (err, result) => {
-        if (err) {
-          return console.error("Erro ao executar a qry de INSERT na tabela Cardapio_Item", err);
-        }
-        res.status(201).json({ message: "Item adicionado ao cardápio com sucesso!" });
-      }
-    );
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Erro interno do servidor." });
-  }
-});
-
-// DELETE ITEM FROM CARDAPIO
-app.delete("/cardapio/:id/remover-item/:itemId", (req, res) => {
-  const { id, itemId } = req.params; // Cardapio ID and Item ID
-
-  try {
-    client.query(
-      "DELETE FROM Cardapio_Item WHERE Cardapio_ID = $1 AND Item_ID = $2",
-      [id, itemId],
-      (err, result) => {
-        if (err) {
-          return console.error("Erro ao executar a qry de DELETE na tabela Cardapio_Item", err);
-        }
-        if (result.rowCount > 0) {
-          res.status(200).json({ message: "Item removido do cardápio com sucesso!" });
-        } else {
-          res.status(404).json({ message: "Item ou cardápio não encontrado." });
-        }
-      }
-    );
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Erro interno do servidor." });
-  }
-});
-
-// CREATE (POST) ITEM
+// CREATE (POST) - Criar um item
 app.post("/itens", (req, res) => {
   try {
     console.log("Alguém enviou um post com os dados:", req.body);
@@ -349,7 +381,8 @@ app.post("/itens", (req, res) => {
   }
 });
 
-// Rotas para a tabela Usuarios
+/************************************************ Rotas para a tabela Usuarios *****************************************************/ 
+// READ (GET) - Listar todos os usuários
 app.get('/usuarios', (req, res) => {
     client.query('SELECT * FROM Usuarios', (err, result) => {
         if (err) {
@@ -359,6 +392,7 @@ app.get('/usuarios', (req, res) => {
     });
 });
 
+// READ (GET) - Buscar um usuário pelo ID
 app.get('/usuarios/:id', (req, res) => {
     client.query('SELECT * FROM Usuarios WHERE id = $1', [req.params.id], (err, result) => {
         if (err) {
@@ -368,6 +402,7 @@ app.get('/usuarios/:id', (req, res) => {
     });
 });
 
+// CREATE (POST) - Criar um usuário
 app.post('/usuarios', (req, res) => {
     const { nome, email, foto, perfil } = req.body;
     client.query(
@@ -382,6 +417,7 @@ app.post('/usuarios', (req, res) => {
     );
 });
 
+// UPDATE (PUT) - Atualizar um usuário
 app.put('/usuarios/:id', (req, res) => {
     const { nome, email, foto, perfil } = req.body;
     client.query(
@@ -396,6 +432,7 @@ app.put('/usuarios/:id', (req, res) => {
     );
 });
 
+// DELETE (DELETE) - Deletar um usuário
 app.delete('/usuarios/:id', (req, res) => {
     const usuarioId = req.params.id;
 
@@ -425,8 +462,8 @@ app.delete('/usuarios/:id', (req, res) => {
     });
 });
 
-
-// Rotas para a tabela Avaliacao
+/**************************************************** Rotas para a tabela Avaliacao **********************************************/
+// READ (GET) - Listar todas as avaliações
 app.get('/avaliacoes', (req, res) => {
     client.query('SELECT * FROM Avaliacao', (err, result) => {
         if (err) {
@@ -436,6 +473,7 @@ app.get('/avaliacoes', (req, res) => {
     });
 });
 
+// READ (GET) - Listar uma avaliação por ID 
 app.get('/avaliacoes/:id', (req, res) => {
     client.query('SELECT * FROM Avaliacao WHERE id = $1', [req.params.id], (err, result) => {
         if (err) {
@@ -445,6 +483,7 @@ app.get('/avaliacoes/:id', (req, res) => {
     });
 });
 
+// CREATE (POST) - Criar uma nova avaliação
 app.post('/avaliacoes', (req, res) => {
   const { pontuacao, comentario, usuarios_id, cardapio_id } = req.body;
 
@@ -482,7 +521,7 @@ app.post('/avaliacoes', (req, res) => {
   );
 });
 
-
+// UPDATE (PUT) - Atualizar uma avaliação por ID
 app.put('/avaliacoes/:id', (req, res) => {
   const { pontuacao, comentario, usuarios_id, cardapio_id } = req.body;
 
@@ -506,7 +545,7 @@ app.put('/avaliacoes/:id', (req, res) => {
   );
 });
 
-
+// DELETE (DELETE) - Deletar uma avaliacao
 app.delete('/avaliacoes/:id', (req, res) => {
     client.query('DELETE FROM Avaliacao WHERE id = $1 RETURNING *', [req.params.id], (err, result) => {
         if (err) {
@@ -519,7 +558,8 @@ app.delete('/avaliacoes/:id', (req, res) => {
     });
 });
 
-// Rotas para a tabela Avisos
+/*********************************************** Rotas para a tabela Avisos *******************************************************/
+// READ (GET) - Listar todos os avisos
 app.get('/avisos', (req, res) => {
     client.query('SELECT * FROM Avisos', (err, result) => {
         if (err) {
@@ -529,6 +569,7 @@ app.get('/avisos', (req, res) => {
     });
 });
 
+// READ (GET) - Listar todos os avisos por ID
 app.get('/avisos/:id', (req, res) => {
     client.query('SELECT * FROM Avisos WHERE id = $1', [req.params.id], (err, result) => {
         if (err) {
@@ -538,6 +579,7 @@ app.get('/avisos/:id', (req, res) => {
     });
 });
 
+// CREATE (POST) - Criar novo aviso
 app.post('/avisos', (req, res) => {
     const { data, aviso, tipo, Usuarios_ID } = req.body;
     client.query(
@@ -552,6 +594,7 @@ app.post('/avisos', (req, res) => {
     );
 });
 
+// UPDATE (PUT) - Atualizar aviso
 app.put('/avisos/:id', (req, res) => {
     const { data, aviso, tipo, Usuarios_ID } = req.body;
     client.query(
@@ -566,6 +609,7 @@ app.put('/avisos/:id', (req, res) => {
     );
 });
 
+// DELETE (DELETE) - Excluir aviso
 app.delete('/avisos/:id', (req, res) => {
     client.query('DELETE FROM Avisos WHERE id = $1 RETURNING *', [req.params.id], (err, result) => {
         if (err) {
@@ -578,8 +622,8 @@ app.delete('/avisos/:id', (req, res) => {
     });
 });
 
-// Rotas para a tabela Cardapio_Item
-// CREATE - Adicionar novo Cardapio_Item
+/*********************************************** Rotas para a tabela Cardapio_Item ********************************************************/
+// CREATE (POST) - Adicionar novo Cardapio_Item
 app.post('/cardapio_item', (req, res) => {
   const { Cardapio_ID, Item_ID } = req.body;
   client.query(
@@ -594,7 +638,7 @@ app.post('/cardapio_item', (req, res) => {
   );
 });
 
-// READ - Listar todos os itens de cardápio
+// READ (GET) - Listar todos os itens de cardápio
 app.get('/cardapio_item', (req, res) => {
   client.query('SELECT * FROM Cardapio_Item', (err, result) => {
       if (err) {
@@ -604,7 +648,7 @@ app.get('/cardapio_item', (req, res) => {
   });
 });
 
-// READ - Obter item de cardápio por ID
+// READ (GET) - Obter item de cardápio por ID
 app.get('/cardapio_item/:id', (req, res) => {
   const { id } = req.params;
   client.query('SELECT * FROM Cardapio_Item WHERE ID = $1', [id], (err, result) => {
@@ -618,7 +662,7 @@ app.get('/cardapio_item/:id', (req, res) => {
   });
 });
 
-// UPDATE - Atualizar item de cardápio
+// UPDATE (PUT) - Atualizar item de cardápio
 app.put('/cardapio_item/:id', (req, res) => {
   const { id } = req.params;
   const { Cardapio_ID, Item_ID } = req.body;
@@ -637,7 +681,7 @@ app.put('/cardapio_item/:id', (req, res) => {
   );
 });
 
-// DELETE - Excluir item de cardápio
+// DELETE (DELETE) - Excluir item de cardápio
 app.delete('/cardapio_item/:id', (req, res) => {
   const { id } = req.params;
   client.query('DELETE FROM Cardapio_Item WHERE ID = $1 RETURNING *', [id], (err, result) => {
@@ -650,20 +694,3 @@ app.delete('/cardapio_item/:id', (req, res) => {
       res.json({ message: 'Item do cardápio excluído com sucesso.' });
   });
 });
-
-// Rota para excluir todos os itens de um cardápio 
-app.delete("/cardapio/:id/itens", (req, res) => {
-  const cardapioId = req.params.id;
-
-  client.query(
-      "DELETE FROM Cardapio_Item WHERE Cardapio_ID = $1",
-      [cardapioId],
-      (err, result) => {
-          if (err) {
-              return res.status(500).json({ error: "Erro ao excluir itens" });
-          }
-          res.status(200).json({ message: "Itens removidos com sucesso" });
-      }
-  );
-});
-
