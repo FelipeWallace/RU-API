@@ -558,6 +558,24 @@ app.delete('/avaliacoes/:id', (req, res) => {
     });
 });
 
+// READ (GET) - Listar avaliações pelo ID do cardápio
+app.get('/cardapio/:id/avaliacoes', (req, res) => {
+  const cardapioId = req.params.id; // Obtém o ID do cardápio da URL
+
+  client.query('SELECT * FROM Avaliacao WHERE Cardapio_ID = $1', [cardapioId], (err, result) => {
+      if (err) {
+          return res.status(500).json({ error: 'Erro ao buscar avaliações.' });
+      }
+
+      // Verifica se existem avaliações
+      if (result.rows.length === 0) {
+          return res.status(404).json({ message: 'Nenhuma avaliação encontrada para este cardápio.' });
+      }
+
+      res.json(result.rows); // Retorna todas as avaliações encontradas
+  });
+});
+
 /*********************************************** Rotas para a tabela Avisos *******************************************************/
 // READ (GET) - Listar todos os avisos
 app.get('/avisos', (req, res) => {
