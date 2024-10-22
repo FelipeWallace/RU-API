@@ -712,3 +712,5 @@ app.delete('/cardapio_item/:id', (req, res) => {
       res.json({ message: 'Item do cardápio excluído com sucesso.' });
   });
 });
+
+module.exports = app;
