@@ -15,11 +15,13 @@ var client = new Client(conString);
 
 client.connect(function (err) {
   if (err) {
-    return console.error('Não foi possível conectar ao banco.', err);
+    // return console.error('Não foi possível conectar ao banco.', err);
+    return res.status(500).json({ error: 'Erro ao conectar ao banco.' });
   }
   client.query('SELECT NOW()', function (err, result) {
     if (err) {
-      return console.error('Erro ao executar a query.', err);
+      //return console.error('Erro ao executar a query.', err);
+      return res.status(500).json({ error: 'Erro ao executar a query.' });
     }
     console.log(result.rows[0]);
   });
@@ -40,7 +42,8 @@ app.get("/cardapio", (req, res) => {
     client.query("SELECT * FROM cardapio", function
       (err, result) {
       if (err) {
-        return console.error("Erro ao executar a qry de SELECT", err);
+        // return console.error("Erro ao executar a qry de SELECT", err);
+        return res.status(500).json({ error: "Erro ao executar a qry de SELECT" });
       }
       res.send(result.rows);
       console.log("Rota: get cardapio");
@@ -58,7 +61,8 @@ app.get("/cardapio/:id", (req, res) => {
       "SELECT * FROM cardapio WHERE id = $1", [req.params.id],
       (err, result) => {
         if (err) {
-          return console.error("Erro ao executar a qry de SELECT id", err);
+          // return console.error("Erro ao executar a qry de SELECT id", err);
+          return res.status(500).json({ error: "Erro ao executar a qry de SELECT id" });
         }
         res.send(result.rows);
         //console.log(result);
@@ -81,7 +85,8 @@ app.delete("/cardapio/:id", (req, res) => {
       [cardapioId], 
       (err, result) => {
         if (err) {
-          return console.error("Erro ao verificar avaliações", err);
+          // return console.error("Erro ao verificar avaliações", err);
+          return res.status(500).json({ error: "Erro ao verificar avaliações" });
         }
 
         const avaliacaoCount = parseInt(result.rows[0].count, 10);
@@ -97,9 +102,9 @@ app.delete("/cardapio/:id", (req, res) => {
           [cardapioId], 
           (err, result) => {
             if (err) {
-              return console.error("Erro ao executar a query de DELETE", err);
+              // return console.error("Erro ao executar a query de DELETE", err);
+              return res.status(500).json({ error: "Erro ao executar a query de DELETE" });
             }
-
             if (result.rowCount === 0) {
               res.status(404).json({ info: "Registro não encontrado." });
             } else {
@@ -163,6 +168,7 @@ app.put("/cardapio/:id", (req, res) => {
     );
   } catch (erro) {
     console.error(erro);
+    res.status(500).json({ error: "Erro no servidor" });
   }
 });
 
@@ -175,13 +181,15 @@ app.get("/cardapio/:id/itens", (req, res) => {
       [req.params.id],
       (err, result) => {
         if (err) {
-          return console.error("Erro ao executar a qry de SELECT itens por cardápio id", err);
+          // return console.error("Erro ao executar a qry de SELECT itens por cardápio id", err);
+          return res.status(500).json({ error: "Erro ao executar a qry de SELECT itens por cardápio id" });
         }
         res.send(result.rows);
       }
     );
   } catch (error) {
     console.log(error);
+    res.status(500).json({ error: "Ocorreu um erro no servidor." });
   }
 });
 
@@ -196,7 +204,8 @@ app.post("/cardapio/:id/adicionar-item", (req, res) => {
       [id, itemId],
       (err, result) => {
         if (err) {
-          return console.error("Erro ao executar a qry de INSERT na tabela Cardapio_Item", err);
+          // return console.error("Erro ao executar a qry de INSERT na tabela Cardapio_Item", err);
+          return res.status(500).json({ error: "Erro ao executar a qry de INSERT na tabela Cardapio_Item" });
         }
         res.status(201).json({ message: "Item adicionado ao cardápio com sucesso!" });
       }
@@ -217,7 +226,8 @@ app.delete("/cardapio/:id/remover-item/:itemId", (req, res) => {
       [id, itemId],
       (err, result) => {
         if (err) {
-          return console.error("Erro ao executar a qry de DELETE na tabela Cardapio_Item", err);
+          // return console.error("Erro ao executar a qry de DELETE na tabela Cardapio_Item", err);
+          return res.status(500).json({ error: "Erro ao executar a qry de DELETE na tabela Cardapio_Item" });
         }
         if (result.rowCount > 0) {
           res.status(200).json({ message: "Item removido do cardápio com sucesso!" });
@@ -278,7 +288,8 @@ app.put("/itens/:id", (req, res) => {
       [nome, descricao, imagem_url, id],
       (err, result) => {
         if (err) {
-          return console.error("Erro ao executar a qry de UPDATE item", err);
+          // return console.error("Erro ao executar a qry de UPDATE item", err);
+          return res.status(500).json({ error: "Erro ao executar a qry de UPDATE item" });
         } else {
           res.status(202).json({ "identificador": id });
           console.log(result);
@@ -287,6 +298,7 @@ app.put("/itens/:id", (req, res) => {
     );
   } catch (erro) {
     console.error(erro);
+    res.status(500).json({ error: "Ocorreu um erro no servidor." });
   }
 });
 
@@ -339,7 +351,8 @@ app.get("/itens", (req, res) => {
     console.log("Rota: get itens");
     client.query("SELECT * FROM Item", (err, result) => {
       if (err) {
-        return console.error("Erro ao executar a qry de SELECT", err);
+        // return console.error("Erro ao executar a qry de SELECT", err);
+        return res.status(500).json({ error: "Erro ao executar a qry de SELECT" });
       }
       res.send(result.rows);
     });
