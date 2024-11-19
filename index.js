@@ -475,6 +475,29 @@ app.delete('/usuarios/:id', (req, res) => {
     });
 });
 
+// READ (GET) - Listar avaliações pelo ID do usuário
+app.get('/usuario/:id/avaliacoes', (req, res) => {
+  const usuarioId = req.params.id; // Obtém o ID do usuário da URL
+
+  client.query(
+      'SELECT * FROM Avaliacao WHERE Usuarios_ID = $1',
+      [usuarioId],
+      (err, result) => {
+          if (err) {
+              return res.status(500).json({ error: 'Erro ao buscar avaliações.' });
+          }
+
+          // Verifica se existem avaliações
+          if (result.rows.length === 0) {
+              return res.status(404).json({ message: 'Nenhuma avaliação encontrada para este usuário.' });
+          }
+
+          res.json(result.rows); // Retorna todas as avaliações encontradas
+      }
+  );
+});
+
+
 /**************************************************** Rotas para a tabela Avaliacao **********************************************/
 // READ (GET) - Listar todas as avaliações
 app.get('/avaliacoes', (req, res) => {
